@@ -140,12 +140,12 @@
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="blueComponent" destination="U5g-Nj-f2D" id="RiX-Tg-FGj"/>
+                        <outlet property="blueLabel" destination="U5g-Nj-f2D" id="RiX-Tg-FGj"/>
                         <outlet property="blueSlider" destination="2wS-B0-gGc" id="xvB-gT-KI2"/>
                         <outlet property="colorView" destination="IAa-Hg-wyT" id="AD1-30-8bQ"/>
-                        <outlet property="greenComponent" destination="mPx-W6-gL5" id="MAl-Ma-6ZP"/>
+                        <outlet property="greenLabel" destination="mPx-W6-gL5" id="MAl-Ma-6ZP"/>
                         <outlet property="greenSlider" destination="e9Y-vq-2sD" id="INp-JK-emf"/>
-                        <outlet property="redComponent" destination="7Ud-sr-79z" id="WFp-YK-WhU"/>
+                        <outlet property="redLabel" destination="7Ud-sr-79z" id="WFp-YK-WhU"/>
                         <outlet property="redSlider" destination="ynv-pc-hpo" id="RnF-tH-qct"/>
                     </connections>
                 </viewController>
