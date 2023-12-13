@@ -32,12 +32,12 @@ final class SettingsViewController: UIViewController {
     var viewColor: UIColor!
     // unowned (бесхозная ссылка) - при работе со свойствами, которые не могут принимать nil (14 урок)
     
-//    Зачем передавать три свойства, если можно одно
-//    var redValue: Float!
-//    var greenValue: Float!
-//    var blueValue: Float!
+    //    Зачем передавать три свойства, если можно одно
+    //    var redValue: Float!
+    //    var greenValue: Float!
+    //    var blueValue: Float!
     
-//    weak var delegate: SettingsViewControllerDelegate?
+    //    weak var delegate: SettingsViewControllerDelegate?
     
     // никакие тулбары на уровне класса заводить нельзя
     
@@ -56,9 +56,9 @@ final class SettingsViewController: UIViewController {
         
         colorView.backgroundColor = viewColor
         
-//        redTextField.delegate = self
-//        greenTextField.delegate = self
-//        blueTextField.delegate = self
+        //        redTextField.delegate = self
+        //        greenTextField.delegate = self
+        //        blueTextField.delegate = self
         
         // здесь важна последовательность вызова методов
         setValue(for: redSlider, greenSlider, blueSlider)
@@ -70,7 +70,7 @@ final class SettingsViewController: UIViewController {
         super.touchesBegan(touches, with: event)
         view.endEditing(true)
     }
-
+    
     // MARK: - IBAction
     @IBAction func sliderAction(_ sender: UISlider) {
         switch sender {
@@ -89,13 +89,15 @@ final class SettingsViewController: UIViewController {
     }
     
     @IBAction func doneButtonPressed() {
-        delegate?.setColor(colorView.backgroundColor ?? .white)
+        delegate.setColor(colorView.backgroundColor ?? .white)
         // метод вызывается в том месте, где рождаются данные, там где мы можем их передать
         // в том классе, где инициализирован объект делегата
         dismiss(animated: true)
     }
+}
     
     // MARK: - Private Methods
+extension SettingsViewController {
     private func setColor() {
         colorView.backgroundColor = UIColor(
             red: CGFloat(redSlider.value),
@@ -131,8 +133,8 @@ final class SettingsViewController: UIViewController {
         let ciColor = CIColor(color: viewColor)
         colorSliders.forEach { slider in
             switch slider {
-            case redLabel: redSlider.value = Float(ciColor.red)
-            case greenLabel: greenSlider.value = Float(ciColor.green)
+            case redSlider: redSlider.value = Float(ciColor.red)
+            case greenSlider: greenSlider.value = Float(ciColor.green)
             default: blueSlider.value = Float(ciColor.blue)
             }
         }
@@ -167,11 +169,15 @@ extension SettingsViewController: UITextFieldDelegate {
     // вызывается, когда ... 18:52
     func textFieldDidEndEditing(_ textField: UITextField) {
         guard let text = textField.text else {
-            showAlert(withTitle: "", andMessage: "")
+            showAlert(withTitle: "Wrong format!", andMessage: "Please enter correct value")
             return
         }
         guard let currentValue = Float(text), (0...1).contains(currentValue) else {
-            showAlert(withTitle: "", andMessage: "", textField: textField)
+            showAlert(
+                withTitle: "Wrong format!",
+                andMessage: "Please enter correct value",
+                textField: textField
+            )
             return
         }
         
