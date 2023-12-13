@@ -24,25 +24,46 @@ final class SettingsViewController: UIViewController {
     @IBOutlet var greenTextField: UITextField!
     @IBOutlet var blueTextField: UITextField!
     
-    var redValue: Float!
-    var greenValue: Float!
-    var blueValue: Float!
+    // !!! Никогда не обращаемся к индексам через квадратные скобки !!!
+    // Три элемента не имеют выгоды использовать массивы
     
-    weak var delegate: SettingsViewControllerDelegate?
+    // MARK: - Public Properties
+    unowned var delegate: SettingsViewControllerDelegate!
+    var viewColor: UIColor!
+    // unowned (бесхозная ссылка) - при работе со свойствами, которые не могут принимать nil (14 урок)
+    
+//    Зачем передавать три свойства, если можно одно
+//    var redValue: Float!
+//    var greenValue: Float!
+//    var blueValue: Float!
+    
+//    weak var delegate: SettingsViewControllerDelegate?
+    
+    // никакие тулбары на уровне класса заводить нельзя
+    
+    // свойства - это серьезно
+    // чем больше параметров - тем сложнее логика
+    // на уровне класса только те свойства, к которым должен быть доступ в разных местах, у разных методов
     
     // MARK: - View Life Cycle and overrided methods
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         colorView.layer.cornerRadius = 16
-        updateColor()
         
-        redTextField.delegate = self
-        greenTextField.delegate = self
-        blueTextField.delegate = self
+        redSlider.tintColor = .red
+        greenSlider.tintColor = .green
         
-        redTextField.text = String(format: "%.2f", redValue)
-        greenTextField.text = String(format: "%.2f", greenValue)
-        blueTextField.text = String(format: "%.2f", blueValue)
+        colorView.backgroundColor = viewColor
+        
+//        redTextField.delegate = self
+//        greenTextField.delegate = self
+//        blueTextField.delegate = self
+        
+        // здесь важна последовательность вызова методов
+        setValue(for: redSlider, greenSlider, blueSlider)
+        setValue(for: redLabel, greenLabel, blueLabel)
+        setValue(for: redTextField, greenTextField, blueTextField)
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -52,35 +73,30 @@ final class SettingsViewController: UIViewController {
 
     // MARK: - IBAction
     @IBAction func sliderAction(_ sender: UISlider) {
-        setViewColor()
-        
         switch sender {
         case redSlider:
-            redLabel.text = String(format: "%.2f", redSlider.value)
-            redValue = redSlider.value
-            redTextField.text = redLabel.text
+            setValue(for: redLabel)
+            setValue(for: redTextField)
         case greenSlider:
-            greenLabel.text = String(format: "%.2f", greenSlider.value)
-            greenValue = greenSlider.value
-            greenTextField.text = greenLabel.text
+            setValue(for: greenLabel)
+            setValue(for: greenTextField)
         default:
-            blueLabel.text = String(format: "%.2f", blueSlider.value)
-            blueValue = blueSlider.value
-            blueTextField.text = blueLabel.text
+            setValue(for: blueLabel)
+            setValue(for: blueTextField)
         }
+        
+        setColor()
     }
     
     @IBAction func doneButtonPressed() {
-        delegate?.setColor(
-            red: CGFloat(redValue),
-            green: CGFloat(greenValue),
-            blue: CGFloat(blueValue)
-        )
+        delegate?.setColor(colorView.backgroundColor ?? .white)
+        // метод вызывается в том месте, где рождаются данные, там где мы можем их передать
+        // в том классе, где инициализирован объект делегата
         dismiss(animated: true)
     }
     
     // MARK: - Private Methods
-    private func setViewColor() {
+    private func setColor() {
         colorView.backgroundColor = UIColor(
             red: CGFloat(redSlider.value),
             green: CGFloat(greenSlider.value),
@@ -89,37 +105,50 @@ final class SettingsViewController: UIViewController {
         )
     }
     
-    private func updateColor() {
-        updateRed()
-        updateGreen()
-        updateBlue()
-        
-        setViewColor()
+    // 18:24 достаточно понять один метод - в этом простота...
+    // еще раз посмотреть функции и вариативные параметры в них
+    private func setValue(for labels: UILabel...) {
+        labels.forEach { label in
+            switch label {
+            case redLabel: label.text = string(from: redSlider)
+            case greenLabel: label.text = string(from: greenSlider)
+            default: label.text = string(from: blueSlider)
+            }
+        }
     }
     
-    private func updateRed() {
-        redSlider.value = redValue
-        redLabel.text = String(format: "%.2f", redValue)
+    private func setValue(for textFields: UITextField...) {
+        textFields.forEach { textField in
+            switch textField {
+            case redLabel: textField.text = string(from: redSlider)
+            case greenLabel: textField.text = string(from: greenSlider)
+            default: textField.text = string(from: blueSlider)
+            }
+        }
     }
     
-    private func updateGreen() {
-        greenSlider.value = greenValue
-        greenLabel.text = String(format: "%.2f", greenValue)
+    private func setValue(for colorSliders: UISlider...) {
+        let ciColor = CIColor(color: viewColor)
+        colorSliders.forEach { slider in
+            switch slider {
+            case redLabel: redSlider.value = Float(ciColor.red)
+            case greenLabel: greenSlider.value = Float(ciColor.green)
+            default: blueSlider.value = Float(ciColor.blue)
+            }
+        }
     }
     
-    private func updateBlue() {
-        blueSlider.value = blueValue
-        blueLabel.text = String(format: "%.2f", blueValue)
+    private func string(from slider: UISlider) -> String {
+        String(format: "%.2f", slider.value)
     }
     
-    private func showAlert(
-        withTitle title: String,
-        andMessage message: String,
-        completion: (() -> Void)? = nil
-    ) {
+    private func showAlert(withTitle title: String, andMessage message: String, textField: UITextField? = nil) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         let okAction = UIAlertAction(title: "OK", style: .default) { _ in
-            completion?()
+            textField?.text = "0.05"
+            textField?.becomeFirstResponder()
+            // этот метод вызывается у текстового поля и он вызывает клавиатуру
+            // при нажатии ОК на alert, вызывается клавиатура
         }
         alert.addAction(okAction)
         present(alert, animated: true)
@@ -129,48 +158,67 @@ final class SettingsViewController: UIViewController {
 
 // MARK: - UITextFieldDelegate
 extension SettingsViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        // скрывает клавиатуру по нажатию на done
+    }
+    // если нет цифровой клавиатуры
+    
+    // вызывается, когда ... 18:52
     func textFieldDidEndEditing(_ textField: UITextField) {
+        guard let text = textField.text else {
+            showAlert(withTitle: "", andMessage: "")
+            return
+        }
+        guard let currentValue = Float(text), (0...1).contains(currentValue) else {
+            showAlert(withTitle: "", andMessage: "", textField: textField)
+            return
+        }
+        
         switch textField {
         case redTextField:
-            redValue = Float(redTextField.text ?? "0")
-            guard redValue >= 0.0, redValue <= 1.0 else {
-                showAlert(
-                    withTitle: "Wrong format!",
-                    andMessage: "Please enter correct value"
-                ) {
-                    self.redTextField.text = self.redLabel.text
-                    self.redValue = self.redSlider.value
-                }
-                return
-            }
-            updateRed()
+            redSlider.setValue(currentValue, animated: true)
+            setValue(for: redLabel)
+            // setValue позволяет передать значение слайдеру анимировано
         case greenTextField:
-            greenValue = Float(greenTextField.text ?? "0")
-            guard greenValue >= 0.0, greenValue <= 1.0 else {
-                showAlert(
-                    withTitle: "Wrong format!",
-                    andMessage: "Please enter correct value"
-                ) {
-                    self.greenTextField.text = self.greenLabel.text
-                    self.greenValue = self.greenSlider.value
-                }
-                return
-            }
-            updateGreen()
+            greenSlider.setValue(currentValue, animated: true)
+            setValue(for: greenLabel)
         default:
-            blueValue = Float(blueTextField.text ?? "0")
-            guard blueValue >= 0.0, blueValue <= 1.0 else {
-                showAlert(
-                    withTitle: "Wrong format!",
-                    andMessage: "Please enter correct value"
-                ) {
-                    self.blueTextField.text = self.blueLabel.text
-                    self.blueValue = self.blueSlider.value
-                }
-                return
-            }
-            updateBlue()
+            blueSlider.setValue(currentValue, animated: true)
+            setValue(for: blueLabel)
         }
-        setViewColor()
+        
+        setColor()
+    }
+    
+    // тулбар нужно создавать в textFieldDidBeginEditing
+    // он предшествует появлению клавиатуры
+    // тулбар не относится к клавиатуре, он относится к текстовому полю
+    // он просто пристегивается к клавиатуре
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        guard textField != redTextField else { return }
+        let keyboardToolbar = UIToolbar()
+        keyboardToolbar.sizeToFit()
+        // устанавливает размер тулбара по размеру клавиатуры
+        textField.inputAccessoryView = keyboardToolbar
+        // задаем аксессуар к текстовому полю (тулбар)
+        
+        let doneButton = UIBarButtonItem(
+            barButtonSystemItem: .done,
+            target: textField,
+            // ... 18:49
+            action: #selector(resignFirstResponder)
+            // синтаксис такой
+            // передаем
+        )
+        
+        let flexBarButton = UIBarButtonItem(
+            barButtonSystemItem: .flexibleSpace,
+            // пространство, занимающее все пустое место, оставшееся от остальных элементов
+            target: nil,
+            action: nil
+        )
+        
+        keyboardToolbar.items = [flexBarButton, doneButton]
     }
 }

@@ -8,56 +8,32 @@
 import UIKit
 
 protocol SettingsViewControllerDelegate: AnyObject {
-    func setColor(red: CGFloat, green: CGFloat, blue: CGFloat)
+    func setColor(_ color: UIColor)
+    // меньше слов, больше смысла в названиях
+    // один объект всегда проще передавать, чем несколько объектов
+    // 
 }
 
-class MainViewController: UINavigationController {
-    
-    private var redValue: CGFloat = 0.0
-    private var greenValue: CGFloat = 0.0
-    private var blueValue: CGFloat = 0.0
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = UIColor.purple
-        
-    }
-    
+final class MainViewController: UINavigationController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        let settingsVC = segue.destination as? SettingsViewController
-        settingsVC?.delegate = self
-        
-        settingsVC?.redValue = Float(view.backgroundColor?.redValue ?? 0)
-        settingsVC?.greenValue = Float(view.backgroundColor?.greenValue ?? 0)
-        settingsVC?.blueValue = Float(view.backgroundColor?.blueValue ?? 0)
-    }
-    
-    private func getColorComponents(for color: UIColor) {
-        redValue = color.redValue
-        greenValue = color.greenValue
-        blueValue = color.blueValue
+        guard let settingsVC = segue.destination as? SettingsViewController else { return }
+        settingsVC.delegate = self
+        // невозможно инициализировать самим классом делегат, если наш класс
+        // не подписан под протокол и не принял тип этого протокола
+        settingsVC.viewColor = view.backgroundColor
     }
 }
 
 // MARK: - SettingsViewControllerDelegate
 extension MainViewController: SettingsViewControllerDelegate {
-    func setColor(red: CGFloat, green: CGFloat, blue: CGFloat) {
-        view.backgroundColor = UIColor(red: red, green: green, blue: blue, alpha: 1)
+    // здесь только реализуем метод делегата
+    // больше ничего
+    func setColor(_ color: UIColor) {
+        view.backgroundColor = color
     }
+    // метод реализован именно в этом классе ... 18:16
 }
 
-extension UIColor {
-
-    var redValue: CGFloat{
-        return cgColor.components! [0]
-    }
-    
-    var greenValue: CGFloat{
-        return cgColor.components! [1]
-    }
-
-    var blueValue: CGFloat{
-        return cgColor.components! [2]
-    }
-
-}
+// когда пишем код, если работает - порадовались, отдохнули
+// потом вернитесь к нему и попробуйте найти как можно больше ошибок
+// но только через несколько часов, не сразу, не с замыленными глазами
